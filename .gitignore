@@ -1,0 +1,12 @@
+# dataset (King_Saud/Train and King_Saud/Test)
+King_Saud/
+*.zip
+
+# trained models and checkpoints
+models/
+*.h5
+training_checkpoints/
+training_checkpoints_*/
+
+.ipynb_checkpoints/
+__pycache__/
