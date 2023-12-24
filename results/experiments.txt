@@ -1,0 +1,46 @@
+fixed epochs: siamese {'curl': 20, 'healthy': 20, 'slug': 50, 'spot': 30}, plain 30
+
+seed 42 (386 test images): siamese MobileNetV2 0.813  siamese EfficientNetB0 0.808  plain MobileNetV2 0.891  plain EfficientNetB0 0.860
+seed  1 (387 test images): siamese MobileNetV2 0.858  siamese EfficientNetB0 0.822  plain MobileNetV2 0.873  plain EfficientNetB0 0.845
+seed  2 (384 test images): siamese MobileNetV2 0.758  siamese EfficientNetB0 0.805  plain MobileNetV2 0.893  plain EfficientNetB0 0.865
+seed  3 (388 test images): siamese MobileNetV2 0.822  siamese EfficientNetB0 0.727  plain MobileNetV2 0.812  plain EfficientNetB0 0.827
+seed  4 (382 test images): siamese MobileNetV2 0.798  siamese EfficientNetB0 0.762  plain MobileNetV2 0.840  plain EfficientNetB0 0.788
+
+4 class test accuracy over 5 leaf splits (mean +- std)
+  siamese MobileNetV2      0.810 +- 0.033   (min 0.758, max 0.858)
+  siamese EfficientNetB0   0.785 +- 0.035   (min 0.727, max 0.822)
+  plain MobileNetV2        0.862 +- 0.031   (min 0.812, max 0.893)
+  plain EfficientNetB0     0.837 +- 0.028   (min 0.788, max 0.865)
+
+recall per class, mean over splits
+                               curl  healthy     slug     spot
+  siamese MobileNetV2         0.941    0.858    0.782    0.672
+  siamese EfficientNetB0      0.927    0.768    0.784    0.662
+  plain MobileNetV2           0.941    0.841    0.832    0.833
+  plain EfficientNetB0        0.915    0.766    0.818    0.839
+
+McNemar test per split (b = only first right, c = only second right)
+  siamese MobileNetV2 vs siamese EfficientNetB0
+    seed 42: b= 44 c= 42 p=0.9142
+    seed  1: b= 45 c= 31 p=0.1354
+    seed  2: b= 41 c= 59 p=0.0886
+    seed  3: b= 63 c= 26 p=0.0001
+    seed  4: b= 52 c= 38 p=0.1702
+  siamese MobileNetV2 vs plain MobileNetV2
+    seed 42: b= 10 c= 40 p=0.0000
+    seed  1: b= 24 c= 30 p=0.4966
+    seed  2: b=  6 c= 58 p=0.0000
+    seed  3: b= 30 c= 26 p=0.6889
+    seed  4: b= 30 c= 46 p=0.0846
+  siamese EfficientNetB0 vs plain EfficientNetB0
+    seed 42: b= 12 c= 32 p=0.0037
+    seed  1: b= 21 c= 30 p=0.2624
+    seed  2: b=  9 c= 32 p=0.0004
+    seed  3: b= 31 c= 70 p=0.0001
+    seed  4: b= 22 c= 32 p=0.2203
+  plain MobileNetV2 vs plain EfficientNetB0
+    seed 42: b= 37 c= 25 p=0.1619
+    seed  1: b= 33 c= 22 p=0.1770
+    seed  2: b= 33 c= 22 p=0.1770
+    seed  3: b= 26 c= 32 p=0.5118
+    seed  4: b= 50 c= 30 p=0.0330

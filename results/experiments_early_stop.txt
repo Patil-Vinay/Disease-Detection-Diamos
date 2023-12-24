@@ -1,0 +1,58 @@
+epochs picked by early stopping on validation leaves (patience 10, max 100)
+
+seed 42 (386 test images): siamese MobileNetV2 0.811  siamese EfficientNetB0 0.793  plain MobileNetV2 0.806  plain EfficientNetB0 0.839
+seed  1 (387 test images): siamese MobileNetV2 0.814  siamese EfficientNetB0 0.832  plain MobileNetV2 0.827  plain EfficientNetB0 0.853
+seed  2 (384 test images): siamese MobileNetV2 0.802  siamese EfficientNetB0 0.799  plain MobileNetV2 0.870  plain EfficientNetB0 0.839
+seed  3 (388 test images): siamese MobileNetV2 0.765  siamese EfficientNetB0 0.737  plain MobileNetV2 0.830  plain EfficientNetB0 0.822
+seed  4 (382 test images): siamese MobileNetV2 0.806  siamese EfficientNetB0 0.780  plain MobileNetV2 0.832  plain EfficientNetB0 0.798
+
+4 class test accuracy over 5 leaf splits (mean +- std)
+  siamese MobileNetV2      0.800 +- 0.018   (min 0.765, max 0.814)
+  siamese EfficientNetB0   0.788 +- 0.031   (min 0.737, max 0.832)
+  plain MobileNetV2        0.833 +- 0.021   (min 0.806, max 0.870)
+  plain EfficientNetB0     0.830 +- 0.019   (min 0.798, max 0.853)
+
+recall per class, mean over splits
+                               curl  healthy     slug     spot
+  siamese MobileNetV2         0.947    0.833    0.786    0.645
+  siamese EfficientNetB0      0.917    0.801    0.792    0.650
+  plain MobileNetV2           0.929    0.871    0.840    0.703
+  plain EfficientNetB0        0.919    0.770    0.832    0.792
+
+epochs used per split
+  siamese MobileNetV2      curl     [4, 6, 8, 21, 98]
+  siamese MobileNetV2      healthy  [99, 8, 53, 75, 100]
+  siamese MobileNetV2      slug     [57, 20, 10, 16, 29]
+  siamese MobileNetV2      spot     [17, 33, 12, 9, 13]
+  siamese EfficientNetB0   curl     [6, 7, 20, 16, 67]
+  siamese EfficientNetB0   healthy  [37, 47, 27, 47, 96]
+  siamese EfficientNetB0   slug     [24, 24, 15, 26, 15]
+  siamese EfficientNetB0   spot     [42, 34, 16, 17, 26]
+  plain MobileNetV2                 [2, 3, 4, 6, 8]
+  plain EfficientNetB0              [7, 5, 6, 11, 10]
+
+McNemar test per split (b = only first right, c = only second right)
+  siamese MobileNetV2 vs siamese EfficientNetB0
+    seed 42: b= 37 c= 30 p=0.4638
+    seed  1: b= 33 c= 40 p=0.4828
+    seed  2: b= 40 c= 39 p=1.0000
+    seed  3: b= 50 c= 39 p=0.2891
+    seed  4: b= 54 c= 44 p=0.3634
+  siamese MobileNetV2 vs plain MobileNetV2
+    seed 42: b= 30 c= 28 p=0.8957
+    seed  1: b= 47 c= 52 p=0.6879
+    seed  2: b= 14 c= 40 p=0.0005
+    seed  3: b= 26 c= 51 p=0.0059
+    seed  4: b= 28 c= 38 p=0.2678
+  siamese EfficientNetB0 vs plain EfficientNetB0
+    seed 42: b= 18 c= 36 p=0.0198
+    seed  1: b= 22 c= 30 p=0.3317
+    seed  2: b= 11 c= 26 p=0.0201
+    seed  3: b= 30 c= 63 p=0.0008
+    seed  4: b= 19 c= 26 p=0.3713
+  plain MobileNetV2 vs plain EfficientNetB0
+    seed 42: b= 33 c= 46 p=0.1766
+    seed  1: b= 31 c= 41 p=0.2888
+    seed  2: b= 39 c= 27 p=0.1753
+    seed  3: b= 39 c= 36 p=0.8176
+    seed  4: b= 37 c= 24 p=0.1237

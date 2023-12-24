@@ -1,6 +1,7 @@
 # dataset (King_Saud/Train and King_Saud/Test)
 King_Saud/
 *.zip
+images_100.npz
 
 # trained models and checkpoints
 models/
