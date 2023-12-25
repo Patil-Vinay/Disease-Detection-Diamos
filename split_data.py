@@ -23,6 +23,21 @@ def leaf_id(name):
     return cls, num
 
 
+def pick_leaves(names, seed, frac=0.2):
+    # picks frac of the leaves of each class, returns a set of leaf ids
+    leaves = {c: set() for c in CLASSES}
+    for name in names:
+        cls, leaf = leaf_id(name)
+        leaves[cls].add(leaf)
+    random.seed(seed)
+    picked = set()
+    for cls in CLASSES:
+        ids = sorted(leaves[cls])
+        random.shuffle(ids)
+        picked.update((cls, i) for i in ids[:round(len(ids) * frac)])
+    return picked
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', default='King_Saud')
@@ -36,23 +51,17 @@ def main():
         print(test_dir, 'already exists, delete it first to split again')
         return
 
-    # all leaves of each class, from every folder they show up in
-    leaves = {c: set() for c in CLASSES}
+    # all images, from every folder they show up in
+    names = []
     for folder in CLASSES:
         for role in ['anchor', 'positive', 'negative']:
-            for name in os.listdir(os.path.join(train_dir, folder, role)):
-                if name.endswith('.jpg'):
-                    cls, leaf = leaf_id(name)
-                    leaves[cls].add(leaf)
+            names += [n for n in os.listdir(os.path.join(train_dir, folder, role)) if n.endswith('.jpg')]
 
-    random.seed(args.seed)
-    held_out = set()
+    held_out = pick_leaves(names, args.seed, args.test)
     for cls in CLASSES:
-        ids = sorted(leaves[cls])
-        random.shuffle(ids)
-        n = round(len(ids) * args.test)
-        held_out.update((cls, i) for i in ids[:n])
-        print(cls, len(ids), 'leaves,', n, 'held out')
+        total = len({leaf_id(n) for n in names if n.startswith(cls + '_')})
+        n = sum(1 for c, _ in held_out if c == cls)
+        print(cls, total, 'leaves,', n, 'held out')
 
     for folder in CLASSES:
         for role in ['anchor', 'positive', 'negative']:

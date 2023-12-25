@@ -1,13 +1,12 @@
-# Uses the four siamese models together to pick a class for a leaf image.
-# Each model compares the image with a few train images of its own class,
-# the class whose model gives the highest average score wins.
+# Classifies a leaf image with the shared Siamese model from Siamese_AllClasses.ipynb.
+# The leaf is compared with the embeddings of all train images (saved by the notebook),
+# the class with the highest average score wins.
 #
 #   python predict.py leaf.jpg
-#   python predict.py leaf.jpg --backbone EfficientNetB0
+#   python predict.py leaf.jpg --backbone MobileNetV2
 #   python predict.py --test        (runs on every image in King_Saud/Test)
 import os
 import glob
-import random
 import argparse
 
 import numpy as np
@@ -15,6 +14,7 @@ import tensorflow as tf
 from keras.layers import Layer
 
 CLASSES = ['curl', 'healthy', 'slug', 'spot']
+SIZE = 224
 
 
 class L1Dist(Layer):
@@ -25,57 +25,39 @@ class L1Dist(Layer):
         return tf.math.abs(input_embedding - validation_embedding)
 
 
-def load_image(path, backbone):
+def load_image(path):
     img = tf.io.decode_jpeg(tf.io.read_file(path), channels=3)
-    img = tf.image.resize(img, (100, 100))
-    # same scaling as in the notebooks
-    if backbone == 'MobileNetV2':
-        img = img / 127.5 - 1
-    return img.numpy()
+    return tf.cast(tf.round(tf.image.resize(img, (SIZE, SIZE))), tf.uint8).numpy()
 
 
-def class_of(path):
-    return os.path.basename(path).split('_')[0]
-
-
-def reference_images(data_dir, cls, n, backbone):
-    # train images of this class, from its anchor folder
-    files = sorted(glob.glob(os.path.join(data_dir, 'Train', cls, 'anchor', '*.jpg')))
-    random.Random(0).shuffle(files)
-    return np.stack([load_image(f, backbone) for f in files[:n]])
-
-
-def scores(models, refs, images):
-    # images: (N, 100, 100, 3), returns (N, 4) average score per class
-    out = np.zeros((len(images), len(CLASSES)))
-    for c, cls in enumerate(CLASSES):
-        n_ref = len(refs[cls])
-        a = np.repeat(images, n_ref, axis=0)
-        b = np.tile(refs[cls], (len(images), 1, 1, 1))
-        s = models[cls].predict([a, b], batch_size=64, verbose=0)
-        out[:, c] = s.reshape(len(images), n_ref).mean(axis=1)
+def scores(query_emb, ref_emb, ref_labels, w, b):
+    out = np.zeros((len(query_emb), len(CLASSES)))
+    for c in range(len(CLASSES)):
+        refs = ref_emb[ref_labels == c]
+        for i, q in enumerate(query_emb):
+            out[i, c] = (1 / (1 + np.exp(-(np.abs(refs - q) @ w + b)))).mean()
     return out
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('image', nargs='?')
-    parser.add_argument('--backbone', default='MobileNetV2', choices=['MobileNetV2', 'EfficientNetB0'])
+    parser.add_argument('--backbone', default='EfficientNetB0', choices=['MobileNetV2', 'EfficientNetB0'])
     parser.add_argument('--data', default='King_Saud')
     parser.add_argument('--models', default='models')
-    parser.add_argument('--refs', type=int, default=10, help='train images per class to compare with')
     parser.add_argument('--test', action='store_true')
     args = parser.parse_args()
 
-    models = {}
-    refs = {}
-    for cls in CLASSES:
-        path = os.path.join(args.models, '{}_{}.h5'.format(args.backbone, cls.capitalize()))
-        models[cls] = tf.keras.models.load_model(path, custom_objects={'L1Dist': L1Dist}, compile=False)
-        refs[cls] = reference_images(args.data, cls, args.refs, args.backbone)
+    model = tf.keras.models.load_model(os.path.join(args.models, 'siamese_{}.h5'.format(args.backbone)),
+                                       custom_objects={'L1Dist': L1Dist}, compile=False)
+    embed = model.get_layer('embed')
+    w, b = model.get_layer('head').get_weights()
+    refs = np.load(os.path.join(args.models, 'refs_{}.npz'.format(args.backbone)))
+    ref_emb, ref_labels = refs['embeddings'], refs['labels']
 
     if args.image:
-        s = scores(models, refs, load_image(args.image, args.backbone)[None])[0]
+        emb = embed.predict(load_image(args.image)[None], verbose=0)
+        s = scores(emb, ref_emb, ref_labels, w[:, 0], b[0])[0]
         for cls, v in zip(CLASSES, s):
             print('{:8s} {:.3f}'.format(cls, v))
         print('prediction:', CLASSES[int(np.argmax(s))])
@@ -86,15 +68,16 @@ def main():
 
     # every held out image once (the same file can be in more than one folder)
     files = {}
-    for f in glob.glob(os.path.join(args.data, 'Test', '*', '*', '*.jpg')):
+    for f in sorted(glob.glob(os.path.join(args.data, 'Test', '*', '*', '*.jpg'))):
         files.setdefault(os.path.basename(f).replace('(1)', ''), f)
-    files = sorted(files.values())
+    names = sorted(files)
 
-    images = np.stack([load_image(f, args.backbone) for f in files])
-    pred = np.argmax(scores(models, refs, images), axis=1)
-    true = np.array([CLASSES.index(class_of(f)) for f in files])
+    images = np.stack([load_image(files[n]) for n in names])
+    emb = embed.predict(images, batch_size=64, verbose=0)
+    pred = np.argmax(scores(emb, ref_emb, ref_labels, w[:, 0], b[0]), axis=1)
+    true = np.array([CLASSES.index(n.split('_')[0]) for n in names])
 
-    print(args.backbone, 'on', len(files), 'test images')
+    print(args.backbone, 'on', len(names), 'test images')
     print('accuracy: {:.4f}'.format(np.mean(pred == true)))
     print()
     print('rows = true class, columns = predicted')
