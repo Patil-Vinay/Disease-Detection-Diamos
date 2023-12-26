@@ -5,7 +5,16 @@ A pretrained MobileNetV2 or EfficientNetB0 is used as a frozen feature extractor
 
 Classes: **curl**, **healthy**, **slug**, **spot**
 
+![one train leaf of each class](images/classes.png)
+
+There are two versions:
+
+1. **Per class notebooks** (`MobileNetV2_<Class>.ipynb`, `EfficientNetB0_<Class>.ipynb`): the first version, one Siamese network per class on 100x100 images.
+2. **Shared model** (`Siamese_AllClasses.ipynb`): one Siamese network for all 4 classes on 224x224 images. This is the better one, see the results below.
+
 ## How it works
+
+### Per class notebooks
 
 There is one Siamese network per class. It takes two leaf images and outputs a score between 0 and 1 for "both images are from this class".
 
@@ -14,13 +23,30 @@ Both images go through the same backbone. The absolute difference of the two fea
 - backbone: MobileNetV2 or EfficientNetB0 with ImageNet weights, frozen
 - input size 100x100
 - loss: binary cross entropy, Adam with learning rate 1e-4, batch size 16
+- epochs: 20 for curl and healthy, 50 for slug, 30 for spot
 
 Training pairs come from the `anchor`, `positive` and `negative` folders of each class:
 
 - anchor + positive (same class) gives label 1
 - anchor + negative (images of the other 3 classes) gives label 0
 
-To classify a single leaf, `predict.py` runs all 4 models. Each one compares the leaf with 10 train images of its own class and the class with the highest average score is the prediction.
+![a positive and a negative pair for spot](images/pairs.png)
+
+To classify a single leaf, `predict_per_class.py` runs all 4 models. Each one compares the leaf with 10 train images of its own class and the class with the highest average score is the prediction.
+
+### Shared model
+
+`Siamese_AllClasses.ipynb` has one network that answers "are these two leaves the same class" for any of the 4 classes:
+
+- input size 224x224, EfficientNetB0 (frozen) with global average pooling
+- both images go through the same Dense layer with 128 outputs (the embedding)
+- the absolute difference of the two embeddings goes to a Dense layer with one sigmoid output
+- every epoch uses 4000 new random pairs, half from the same class and half from different classes
+- the positive of a pair is always a different leaf than the anchor
+- 20% of the train leaves are kept for validation and the epoch with the best validation accuracy is kept (out of 40)
+
+A leaf is classified by comparing it with every train image. The class with the highest average score wins.
+`predict.py` does the same with the saved model and the saved embeddings of the train images.
 
 ## Dataset
 
@@ -46,13 +72,15 @@ The dataset and the trained models are not in this repo (see `.gitignore`).
 | File | What it does |
 |------|--------------|
 | `split_data.py` | makes the train/test split by leaf |
-| `MobileNetV2_<Class>.ipynb` | trains and tests the Siamese network for one class with MobileNetV2 |
+| `MobileNetV2_<Class>.ipynb` | trains and tests the per class Siamese network for one class with MobileNetV2 |
 | `EfficientNetB0_<Class>.ipynb` | same with EfficientNetB0 |
-| `predict.py` | uses the 4 models of a backbone together to classify a leaf |
-| `experiments.py` | repeats everything on 5 leaf splits and compares with a plain classifier |
-| `results/` | output of `experiments.py` |
-
-Epochs: 20 for curl and healthy, 50 for slug, 30 for spot.
+| `predict_per_class.py` | uses the 4 per class models of a backbone together to classify a leaf |
+| `Siamese_AllClasses.ipynb` | trains and tests the shared Siamese model |
+| `predict.py` | classifies a leaf with the shared model |
+| `experiments.py` | repeats the per class setup on 5 leaf splits and compares with a plain classifier |
+| `siamese_experiments.py` | tries the changes of the shared model one at a time on the same 5 splits |
+| `results/` | output of the two experiment scripts |
+| `plot_results.py` | makes the figures in `images/` from the results and the saved shared model |
 
 ## How to run
 
@@ -65,22 +93,52 @@ pip install -r requirements.txt
    ```
    python split_data.py
    ```
-3. Run the 4 notebooks of a backbone. Each one saves its model to `models/<Backbone>_<Class>.h5`.
+3. Run `Siamese_AllClasses.ipynb`. It saves `models/siamese_EfficientNetB0.h5` and `models/refs_EfficientNetB0.npz`.
 4. Classify a leaf or test on all held out images:
    ```
    python predict.py leaf.jpg
-   python predict.py leaf.jpg --backbone EfficientNetB0
    python predict.py --test
    ```
-5. Repeat on 5 leaf splits (uses Train and Test together and makes its own splits):
+5. For the per class version run the 4 notebooks of a backbone (each one saves `models/<Backbone>_<Class>.h5`) and then:
+   ```
+   python predict_per_class.py leaf.jpg --backbone MobileNetV2
+   python predict_per_class.py --test
+   ```
+6. Repeat on 5 leaf splits (uses Train and Test together and makes its own splits):
    ```
    python experiments.py
    python experiments.py --early-stop
+   python siamese_experiments.py --size 100
+   python siamese_experiments.py --size 224
+   python siamese_experiments.py --size 224 --fine-tune
+   ```
+   The backbone features are computed once per run, so these take minutes except `--fine-tune`, which trains the backbone and takes a few hours on CPU.
+7. Make the figures of this readme:
+   ```
+   python plot_results.py
    ```
 
-## Results on one split
+## Results
 
-These are from the notebooks and `predict.py` on the seed 42 split. They come from a single training run, see the next section for how much they move.
+All accuracies are 4 class accuracy on test leaves the model never saw. Numbers on a single split come from one training run, the 5 split tables show how much they move.
+
+### Shared model, seed 42 split
+
+`Siamese_AllClasses.ipynb` and `predict.py --test` (386 test images): **accuracy 0.946**
+
+![confusion matrix of the shared model](images/confusion_matrix.png)
+
+All mistakes are slug or spot leaves. The curl and healthy test images are 11 and 9 leaves with their augmented copies, so those rows are based on few real leaves.
+
+Some test leaves it got right (2 random ones per class):
+
+![test leaves classified right](images/test_right.png)
+
+Some of the 21 mistakes (8 random ones). Most are slug leaves with small dark marks like the ones spot has. The spot leaves taken as healthy only have a few small marks:
+
+![test leaves classified wrong](images/test_wrong.png)
+
+### Per class notebooks, seed 42 split
 
 Pair verification (test accuracy of each notebook):
 
@@ -89,7 +147,7 @@ Pair verification (test accuracy of each notebook):
 | MobileNetV2 | 0.947 | 0.816 | 0.804 | 0.756 |
 | EfficientNetB0 | 0.926 | 0.750 | 0.859 | 0.756 |
 
-4 class classification with `predict.py --test` (386 test images):
+4 class classification with `predict_per_class.py --test`:
 
 | Backbone | Accuracy |
 |----------|----------|
@@ -105,14 +163,11 @@ MobileNetV2 confusion matrix (rows = true class, columns = predicted):
 | slug    | 1 | 3 | 85 | 11 |
 | spot    | 2 | 10 | 17 | 74 |
 
-Most mistakes are between slug and spot, since slug damage can look like small spots.
-The curl and healthy test images are 11 and 9 leaves with their augmented copies, so those rows are based on few real leaves.
+### Per class setup on 5 splits
 
-## Results on 5 splits
+`experiments.py` picks 5 different sets of test leaves (seed 42 is the split above plus seeds 1 to 4) and trains everything again on each one. It also trains a **plain classifier** on the same frozen backbone (Flatten and Dense with 4 softmax outputs) to see if the Siamese setup is worth it. Pairs, epochs and the 10 reference images are the same as in the notebooks and `predict_per_class.py`.
 
-`experiments.py` picks 5 different sets of test leaves (seed 42 is the split above plus seeds 1 to 4) and trains everything again on each one. It also trains a **plain classifier** on the same frozen backbone (Flatten and Dense with 4 softmax outputs) to see if the Siamese setup is worth it. The backbone is frozen so its features are computed once and only the heads are trained. Pairs, epochs and the 10 reference images are the same as in the notebooks and `predict.py`.
-
-4 class test accuracy, mean and std over the 5 splits:
+4 class test accuracy, mean and std over the 5 splits (100x100 images):
 
 | Method | Fixed epochs | Early stopping |
 |--------|--------------|----------------|
@@ -121,7 +176,7 @@ The curl and healthy test images are 11 and 9 leaves with their augmented copies
 | Plain MobileNetV2 | 0.862 +- 0.031 | 0.833 +- 0.021 |
 | Plain EfficientNetB0 | 0.837 +- 0.028 | 0.830 +- 0.019 |
 
-Fixed epochs are the notebook ones (20/20/50/30) and 30 for the plain classifier. With early stopping 20% of the train leaves are used as validation, training stops when the validation loss has not improved for 10 epochs (max 100) and the model is trained again on all train leaves for the best epoch count. The test leaves are never used for this.
+Fixed epochs are the notebook ones (20/20/50/30) and 30 for the plain classifier. With early stopping 20% of the train leaves are used as validation, training stops when the validation loss has not improved for 10 epochs (max 100) and the model is trained again on all train leaves for the best epoch count.
 
 Recall per class with fixed epochs, mean over splits:
 
@@ -130,20 +185,38 @@ Recall per class with fixed epochs, mean over splits:
 | Siamese MobileNetV2 | 0.941 | 0.858 | 0.782 | 0.672 |
 | Plain MobileNetV2 | 0.941 | 0.841 | 0.832 | 0.833 |
 
-Full output with the McNemar test for every split is in `results/`.
+The plain classifier was about 5 points better with both backbones and the McNemar test says the difference is real (p < 0.01) in 2 of the 5 splits for MobileNetV2 and 3 of 5 for EfficientNetB0. Most of the gap is on spot. Training the same Siamese model again on the same split also moved the result a lot (0.813 in `experiments.py` against 0.863 in the notebook on seed 42).
 
-What this shows:
+### Shared model step by step on 5 splits
 
-- The plain classifier does as well or better than the Siamese networks in almost every split. With fixed epochs it is about 5 points higher with both backbones and the McNemar test says the difference is real (p < 0.01) in 2 of the 5 splits for MobileNetV2 and 3 of 5 for EfficientNetB0. Most of the gain is on spot.
-- There is no clear winner between MobileNetV2 and EfficientNetB0. MobileNetV2 is a bit ahead on average but the gap is inside the spread between splits and with early stopping none of the per split differences are significant.
-- Training the same Siamese model again on the same split changes the result a lot. On the seed 42 split `experiments.py` gets 0.813 for Siamese MobileNetV2 while the notebook run got 0.863. So the single split numbers above are on the lucky side.
-- More epochs do not help. Early stopping picks very different epochs from split to split (for example 4 to 98 for curl) because the validation sets are small and the validation loss is flat. The accuracy ends up about the same as with the fixed epochs. For the plain classifier it stops after 2 to 11 epochs, when the validation loss starts going up, but the fixed 30 epochs give better accuracy.
-- Spot is the hardest class. Slug and spot both show small dark marks, which are hard to see at 100x100.
+`siamese_experiments.py` adds the changes of the shared model one at a time. Each row includes the rows above it. Epochs are picked on validation leaves, then the model is trained again on all train leaves and tested once.
 
-## Notes
+4 class test accuracy, mean and std over the same 5 splits:
 
-- MobileNetV2 reaches 100% train accuracy, so the heads overfit the training pairs.
-- Only the head is trained. Unfreezing the last backbone blocks or using bigger images than 100x100 (mainly for spot vs slug) are things to try next.
+| Variant | MobileNetV2 100 | EfficientNetB0 100 | MobileNetV2 224 | EfficientNetB0 224 |
+|---------|-----------------|--------------------|-----------------|--------------------|
+| shared: one model, pooled features, 10 reference images per class | 0.787 +- 0.020 | 0.737 +- 0.022 | 0.845 +- 0.019 | 0.852 +- 0.015 |
+| embedding: + 128 value embedding | 0.855 +- 0.016 | 0.824 +- 0.021 | 0.895 +- 0.015 | 0.917 +- 0.016 |
+| all_refs: + compare with all train images | 0.874 +- 0.013 | 0.839 +- 0.015 | 0.898 +- 0.021 | 0.913 +- 0.017 |
+| top5: average only the 5 best matches | 0.857 +- 0.014 | 0.827 +- 0.026 | 0.901 +- 0.024 | 0.909 +- 0.016 |
+| hard_neg: hardest of 5 random negatives | 0.869 +- 0.012 | 0.830 +- 0.023 | 0.902 +- 0.021 | 0.907 +- 0.021 |
+| plain classifier on the same features | 0.857 +- 0.017 | 0.837 +- 0.023 | 0.907 +- 0.017 | 0.910 +- 0.013 |
+
+![test accuracy of each step](images/step_by_step.png)
+
+Fine tuning was tried with EfficientNetB0 at 224 on top of all_refs: the top 30 backbone layers unfrozen (batch norm kept frozen), random flips, rotation and brightness, learning rate 2e-5, 10 epochs of 2000 pairs. In all 5 splits the validation accuracy was highest before fine tuning started, so the frozen model was kept (test 0.910 +- 0.016 either way). Per epoch numbers are in `results/siamese_finetune.txt`.
+
+![validation accuracy while fine tuning](images/fine_tune.png)
+
+### What this shows
+
+- The learned embedding is the biggest single gain (5 to 9 points). Comparing raw backbone features with one Dense layer is not enough.
+- 224x224 images help every variant, by 2 to 6 points with MobileNetV2 and 7 to 12 with EfficientNetB0. Slug and spot both show small dark marks that are hard to see at 100x100.
+- After the embedding the other changes are inside the spread between splits. The notebook uses all_refs since it doesn't need a choice of reference images.
+- The shared Siamese model now matches the plain classifier (about 0.91) but doesn't beat it. With these classes a softmax classifier on the same features is just as good.
+- There is no clear winner between the backbones. MobileNetV2 is ahead at 100x100 and EfficientNetB0 at 224x224, by about the size of the spread between splits.
+- Fine tuning the backbone did not help with about 1500 train images.
+- Slug against spot is still where almost all mistakes are.
 
 ## Reference
 

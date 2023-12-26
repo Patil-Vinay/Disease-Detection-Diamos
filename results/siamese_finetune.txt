@@ -1,0 +1,14 @@
+seed 42: val per epoch 0.916 0.903 0.900 0.900 0.896 0.903 0.893 0.893 0.896 0.903 0.900
+         frozen val 0.916 test 0.938 | fine tuned best epoch 0 val 0.916 test 0.938
+seed  1: val per epoch 0.912 0.909 0.906 0.893 0.893 0.909 0.906 0.912 0.906 0.906 0.906
+         frozen val 0.912 test 0.915 | fine tuned best epoch 0 val 0.912 test 0.915
+seed  2: val per epoch 0.910 0.904 0.901 0.897 0.888 0.885 0.885 0.885 0.885 0.888 0.894
+         frozen val 0.910 test 0.898 | fine tuned best epoch 0 val 0.910 test 0.898
+seed  3: val per epoch 0.906 0.900 0.897 0.887 0.900 0.897 0.890 0.894 0.890 0.884 0.887
+         frozen val 0.906 test 0.892 | fine tuned best epoch 0 val 0.906 test 0.892
+seed  4: val per epoch 0.942 0.926 0.916 0.916 0.916 0.913 0.922 0.909 0.916 0.913 0.913
+         frozen val 0.942 test 0.906 | fine tuned best epoch 0 val 0.942 test 0.906
+
+frozen      val 0.917  test 0.910 +- 0.016
+fine tuned  val 0.917  test 0.910 +- 0.016  best epochs [0, 0, 0, 0, 0]
+

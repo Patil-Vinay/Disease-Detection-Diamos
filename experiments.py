@@ -17,7 +17,8 @@ import tensorflow as tf
 from keras import layers, models
 from keras.applications import MobileNetV2, EfficientNetB0
 
-from split_data import CLASSES, leaf_id
+# pick_leaves is the same picking as split_data.py, so seed 42 is the test split of the notebooks
+from split_data import CLASSES, leaf_id, pick_leaves
 
 EPOCHS = {'curl': 20, 'healthy': 20, 'slug': 50, 'spot': 30}
 PLAIN_EPOCHS = 30
@@ -40,7 +41,7 @@ def list_images(data_dir):
     return roles, paths
 
 
-def load_images(names, paths, cache):
+def load_images(names, paths, cache, size=100):
     if os.path.exists(cache):
         data = np.load(cache)
         if list(data['names']) == names:
@@ -48,34 +49,20 @@ def load_images(names, paths, cache):
     images = []
     for n in names:
         img = tf.io.decode_jpeg(tf.io.read_file(paths[n]), channels=3)
-        images.append(tf.image.resize(img, (100, 100)).numpy())
+        images.append(tf.image.resize(img, (size, size)).numpy())
     images = np.stack(images)
     np.savez(cache, names=np.array(names), images=images)
     return images
 
 
 def backbone_features(backbone, images):
+    size = images.shape[1]
     if backbone == 'MobileNetV2':
-        base = MobileNetV2(weights='imagenet', include_top=False, input_shape=(100, 100, 3))
+        base = MobileNetV2(weights='imagenet', include_top=False, input_shape=(size, size, 3))
         images = images / 127.5 - 1
     else:
-        base = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(100, 100, 3))
-    return base.predict(images, batch_size=64, verbose=0)
-
-
-def pick_leaves(names, seed, frac=0.2):
-    # same picking as split_data.py, so seed 42 is the test split used in the notebooks
-    leaves = {c: set() for c in CLASSES}
-    for n in names:
-        cls, leaf = leaf_id(n)
-        leaves[cls].add(leaf)
-    random.seed(seed)
-    picked = set()
-    for cls in CLASSES:
-        ids = sorted(leaves[cls])
-        random.shuffle(ids)
-        picked.update((cls, i) for i in ids[:round(len(ids) * frac)])
-    return picked
+        base = EfficientNetB0(weights='imagenet', include_top=False, input_shape=(size, size, 3))
+    return base.predict(images, batch_size=32, verbose=0)
 
 
 class L1Dist(layers.Layer):

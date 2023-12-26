@@ -1,0 +1,78 @@
+MobileNetV2 100px seed 42 shared    test 0.780  val 0.777  epochs 34
+MobileNetV2 100px seed 42 embedding test 0.858  val 0.838  epochs 22
+MobileNetV2 100px seed 42 all_refs  test 0.868  val 0.835  epochs 8
+MobileNetV2 100px seed 42 top5      test 0.855  val 0.832  epochs 24
+MobileNetV2 100px seed 42 hard_neg  test 0.868  val 0.848  epochs 5
+MobileNetV2 100px seed 42 plain     test 0.863  val 0.819  epochs 4
+MobileNetV2 100px seed  1 shared    test 0.765  val 0.785  epochs 34
+MobileNetV2 100px seed  1 embedding test 0.837  val 0.847  epochs 15
+MobileNetV2 100px seed  1 all_refs  test 0.871  val 0.857  epochs 5
+MobileNetV2 100px seed  1 top5      test 0.866  val 0.863  epochs 13
+MobileNetV2 100px seed  1 hard_neg  test 0.860  val 0.857  epochs 9
+MobileNetV2 100px seed  1 plain     test 0.837  val 0.857  epochs 7
+MobileNetV2 100px seed  2 shared    test 0.820  val 0.782  epochs 40
+MobileNetV2 100px seed  2 embedding test 0.870  val 0.853  epochs 6
+MobileNetV2 100px seed  2 all_refs  test 0.898  val 0.830  epochs 10
+MobileNetV2 100px seed  2 top5      test 0.872  val 0.840  epochs 7
+MobileNetV2 100px seed  2 hard_neg  test 0.893  val 0.846  epochs 7
+MobileNetV2 100px seed  2 plain     test 0.885  val 0.833  epochs 32
+MobileNetV2 100px seed  3 shared    test 0.799  val 0.800  epochs 37
+MobileNetV2 100px seed  3 embedding test 0.835  val 0.819  epochs 8
+MobileNetV2 100px seed  3 all_refs  test 0.861  val 0.823  epochs 7
+MobileNetV2 100px seed  3 top5      test 0.832  val 0.823  epochs 34
+MobileNetV2 100px seed  3 hard_neg  test 0.863  val 0.826  epochs 6
+MobileNetV2 100px seed  3 plain     test 0.845  val 0.842  epochs 10
+MobileNetV2 100px seed  4 shared    test 0.770  val 0.822  epochs 29
+MobileNetV2 100px seed  4 embedding test 0.874  val 0.887  epochs 11
+MobileNetV2 100px seed  4 all_refs  test 0.872  val 0.896  epochs 7
+MobileNetV2 100px seed  4 top5      test 0.859  val 0.900  epochs 6
+MobileNetV2 100px seed  4 hard_neg  test 0.861  val 0.890  epochs 7
+MobileNetV2 100px seed  4 plain     test 0.856  val 0.877  epochs 25
+
+MobileNetV2 100px, mean over 5 splits
+  shared    test 0.787 +- 0.020   val 0.793
+  embedding test 0.855 +- 0.016   val 0.849
+  all_refs  test 0.874 +- 0.013   val 0.848
+  top5      test 0.857 +- 0.014   val 0.851
+  hard_neg  test 0.869 +- 0.012   val 0.853
+  plain     test 0.857 +- 0.017   val 0.846
+
+EfficientNetB0 100px seed 42 shared    test 0.705  val 0.722  epochs 34
+EfficientNetB0 100px seed 42 embedding test 0.826  val 0.838  epochs 5
+EfficientNetB0 100px seed 42 all_refs  test 0.850  val 0.835  epochs 14
+EfficientNetB0 100px seed 42 top5      test 0.876  val 0.835  epochs 12
+EfficientNetB0 100px seed 42 hard_neg  test 0.850  val 0.854  epochs 7
+EfficientNetB0 100px seed 42 plain     test 0.842  val 0.822  epochs 58
+EfficientNetB0 100px seed  1 shared    test 0.718  val 0.756  epochs 31
+EfficientNetB0 100px seed  1 embedding test 0.804  val 0.860  epochs 6
+EfficientNetB0 100px seed  1 all_refs  test 0.835  val 0.850  epochs 2
+EfficientNetB0 100px seed  1 top5      test 0.822  val 0.837  epochs 3
+EfficientNetB0 100px seed  1 hard_neg  test 0.845  val 0.847  epochs 9
+EfficientNetB0 100px seed  1 plain     test 0.863  val 0.857  epochs 14
+EfficientNetB0 100px seed  2 shared    test 0.758  val 0.724  epochs 39
+EfficientNetB0 100px seed  2 embedding test 0.846  val 0.833  epochs 9
+EfficientNetB0 100px seed  2 all_refs  test 0.862  val 0.837  epochs 10
+EfficientNetB0 100px seed  2 top5      test 0.828  val 0.830  epochs 7
+EfficientNetB0 100px seed  2 hard_neg  test 0.839  val 0.824  epochs 4
+EfficientNetB0 100px seed  2 plain     test 0.846  val 0.824  epochs 32
+EfficientNetB0 100px seed  3 shared    test 0.758  val 0.739  epochs 21
+EfficientNetB0 100px seed  3 embedding test 0.796  val 0.797  epochs 4
+EfficientNetB0 100px seed  3 all_refs  test 0.817  val 0.803  epochs 23
+EfficientNetB0 100px seed  3 top5      test 0.804  val 0.781  epochs 12
+EfficientNetB0 100px seed  3 hard_neg  test 0.786  val 0.790  epochs 35
+EfficientNetB0 100px seed  3 plain     test 0.843  val 0.790  epochs 27
+EfficientNetB0 100px seed  4 shared    test 0.746  val 0.828  epochs 37
+EfficientNetB0 100px seed  4 embedding test 0.846  val 0.864  epochs 3
+EfficientNetB0 100px seed  4 all_refs  test 0.832  val 0.880  epochs 3
+EfficientNetB0 100px seed  4 top5      test 0.806  val 0.858  epochs 3
+EfficientNetB0 100px seed  4 hard_neg  test 0.830  val 0.858  epochs 3
+EfficientNetB0 100px seed  4 plain     test 0.793  val 0.883  epochs 3
+
+EfficientNetB0 100px, mean over 5 splits
+  shared    test 0.737 +- 0.022   val 0.754
+  embedding test 0.824 +- 0.021   val 0.838
+  all_refs  test 0.839 +- 0.015   val 0.841
+  top5      test 0.827 +- 0.026   val 0.828
+  hard_neg  test 0.830 +- 0.023   val 0.835
+  plain     test 0.837 +- 0.023   val 0.835
+
